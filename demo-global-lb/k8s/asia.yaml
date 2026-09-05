@@ -1,0 +1,95 @@
+# ============================================================
+# CỤM CHÂU Á - namespace asia-cluster
+# ============================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: asia-cluster
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: game-backend
+  namespace: asia-cluster
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: game-backend
+  template:
+    metadata:
+      labels:
+        app: game-backend
+    spec:
+      containers:
+        - name: game-backend
+          image: game-server:latest
+          imagePullPolicy: Never   # dùng image build sẵn trong Minikube, không kéo từ registry
+          ports:
+            - containerPort: 3000
+          env:
+            - name: REGION
+              value: "Asia"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+---
+# Service đóng vai trò LOCAL LOAD BALANCER (PLB) trong cụm châu Á:
+# kube-proxy sẽ tự phân phối traffic đến các Pod hiện có (round robin/random)
+apiVersion: v1
+kind: Service
+metadata:
+  name: game-backend-svc
+  namespace: asia-cluster
+spec:
+  type: NodePort
+  selector:
+    app: game-backend
+  ports:
+    - port: 80
+      targetPort: 3000
+      nodePort: 30080
+---
+# HPA - tự động tăng/giảm số Pod dựa trên % CPU sử dụng
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: game-backend-hpa
+  namespace: asia-cluster
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: game-backend
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+  behavior:
+    # Rút ngắn thời gian chờ so với mặc định (mặc định scale down phải chờ 5 phút)
+    # để demo trong thời gian ngắn vẫn quan sát được hành vi scale down.
+    scaleDown:
+      stabilizationWindowSeconds: 30
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 30
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 15

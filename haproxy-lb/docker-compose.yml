@@ -1,0 +1,55 @@
+services:
+  backend1:
+    image: node:20-alpine
+    container_name: backend1
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+    command: [ "node", "server.js" ]
+    environment:
+      - SERVER_ID=1
+    networks:
+      - lb-net
+
+  backend2:
+    image: node:20-alpine
+    container_name: backend2
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+    command: [ "node", "server.js" ]
+    environment:
+      - SERVER_ID=2
+    networks:
+      - lb-net
+
+  backend3:
+    image: node:20-alpine
+    container_name: backend3
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+    command: [ "node", "server.js" ]
+    environment:
+      - SERVER_ID=3
+    networks:
+      - lb-net
+
+  haproxy-lb:
+    image: haproxy:latest
+    container_name: haproxy-lb
+    ports:
+      - "8081:80" # Traffic chính, tương đương cổng 8080 của Nginx
+      - "8404:8404" # Stats Dashboard trực quan
+    volumes:
+      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    depends_on:
+      - backend1
+      - backend2
+      - backend3
+    networks:
+      - lb-net
+
+networks:
+  lb-net:
+    driver: bridge

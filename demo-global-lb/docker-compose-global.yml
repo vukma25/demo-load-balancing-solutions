@@ -1,0 +1,20 @@
+services:
+  global-router:
+    build: ./global-router
+    container_name: global-router
+    ports:
+      - "9000:80"
+    volumes:
+      - ./global-router/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./global-router/geo:/etc/nginx/geo:ro
+    networks:
+      default:
+        aliases: []
+
+networks:
+  default:
+    external: true
+    # Tên network này do Minikube tự tạo khi chạy `minikube start --driver=docker`.
+    # Nếu Minikube của bạn dùng profile khác mặc định, đổi tên network tương ứng
+    # (kiểm tra bằng lệnh: docker network ls | grep minikube)
+    name: minikube
