@@ -6,13 +6,18 @@
  *   node loadtest.js [URL] [SO_LUONG_REQUEST] [SO_LUONG_DONG_THOI]
  *
  * Ví dụ:
- *   node loadtest.js http://localhost:8080 1000 20
+ *   NODE_TLS_REJECT_UNAUTHORIZED=0 node loadtest.js https://localhost:8445 1000 20
  *   -> gửi 1000 request, tối đa 20 request chạy song song cùng lúc
  */
 
-const url = process.argv[2] || "http://localhost:8080";
+const url = process.argv[2] || "https://localhost:8445";
 const totalRequests = parseInt(process.argv[3] || "500", 10);
 const concurrency = parseInt(process.argv[4] || "20", 10);
+
+if (url.startsWith("https://") && !process.env.NODE_TLS_REJECT_UNAUTHORIZED) {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+  console.warn("TLS certificate verification is disabled for this local demo.");
+}
 
 async function sendOneRequest() {
   const start = Date.now();

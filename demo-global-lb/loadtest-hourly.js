@@ -7,13 +7,18 @@
  *   node loadtest-hourly.js [URL_GLOBAL_ROUTER] [SO_GIO_MO_PHONG] [GIAY_THAT_MOI_GIO] [REQUEST_CO_BAN_MOI_GIO]
  *
  * Ví dụ (mặc định - mô phỏng nhanh để demo, 1 giờ mô phỏng = 20 giây thật):
- *   node loadtest-hourly.js http://localhost:9000 24 20 100
+ *   NODE_TLS_REJECT_UNAUTHORIZED=0 node loadtest-hourly.js https://localhost:9444 24 20 100
  */
 
-const ROUTER_URL = process.argv[2] || "http://localhost:9000";
+const ROUTER_URL = process.argv[2] || "https://localhost:9444";
 const SIM_HOURS = parseInt(process.argv[3] || "24", 10);
 const REAL_SECONDS_PER_HOUR = parseInt(process.argv[4] || "90", 10);
 const BASE_REQUESTS_PER_HOUR = parseInt(process.argv[5] || "100", 10);
+
+if (ROUTER_URL.startsWith("https://") && !process.env.NODE_TLS_REJECT_UNAUTHORIZED) {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+  console.warn("TLS certificate verification is disabled for this local demo.");
+}
 
 // ============================================================
 // IP mẫu theo khu vực, dùng để gán vào header X-Forwarded-For

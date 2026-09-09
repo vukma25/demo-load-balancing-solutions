@@ -49,13 +49,37 @@ metadata:
   name: game-backend-svc
   namespace: asia-cluster
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: game-backend
   ports:
     - port: 80
       targetPort: 3000
-      nodePort: 30080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: game-backend-ingress
+  namespace: asia-cluster
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - asia.game.local
+      secretName: asia-game-tls
+  rules:
+    - host: asia.game.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: game-backend-svc
+                port:
+                  number: 80
 ---
 
 apiVersion: autoscaling/v2

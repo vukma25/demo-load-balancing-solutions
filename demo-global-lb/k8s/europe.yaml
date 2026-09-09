@@ -50,13 +50,37 @@ metadata:
   name: game-backend-svc
   namespace: europe-cluster
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: game-backend
   ports:
     - port: 80
       targetPort: 3000
-      nodePort: 30081
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: game-backend-ingress
+  namespace: europe-cluster
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - europe.game.local
+      secretName: europe-game-tls
+  rules:
+    - host: europe.game.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: game-backend-svc
+                port:
+                  number: 80
 ---
 # HPA - tự động tăng/giảm số Pod dựa trên % CPU sử dụng
 apiVersion: autoscaling/v2

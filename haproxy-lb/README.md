@@ -6,7 +6,7 @@
 trình bày trong báo cáo **"Nghiên cứu triển khai giải pháp cân bằng tải đa lớp: kết hợp định tuyến toàn cầu và cân bằng tải cục bộ"**.
 
 Demo dựng 3 backend server giống nhau, đặt phía sau **HAProxy** 
-(cổng `8081`, kèm Stats Dashboard ở cổng `8404`) — load balancer chuyên biệt
+(HTTPS cổng `8444`, kèm Stats Dashboard ở cổng `8404`) — load balancer chuyên biệt
 
 ## Cấu trúc thư mục
 
@@ -42,7 +42,8 @@ Kiểm tra tất cả container đã chạy:
 docker compose ps
 ```
 
-Phải thấy 4 container ở trạng thái `running`: `backend1`, `backend2`, `backend3`, `haproxy-lb`.
+Phải thấy 5 container ở trạng thái `running`: `backend1`, `backend2`, `backend3`,
+`haproxy-lb`, `waf`.
 
 ### 3. Xem HAProxy Stats Dashboard
 
@@ -77,18 +78,27 @@ Khôi phục lại:
 docker start backend2
 ```
 
-## Đo hiệu năng bằng loadtest.js
+### Đo hiệu năng bằng loadtest.js
 
 ```bash
-node loadtest.js http://localhost:8081 1000 20
+NODE_TLS_REJECT_UNAUTHORIZED=0 node loadtest.js https://localhost:8445 1000 20
 ```
 
+Load test đi theo luồng `Client HTTPS -> WAF HTTPS -> HAProxy HTTPS -> Backend HTTP`.
+`NODE_TLS_REJECT_UNAUTHORIZED=0` chỉ dùng cho certificate tự ký trong demo local.
 Tham số theo thứ tự: URL, tổng số request, số request đồng thời.
+
+Trên PowerShell có thể chạy trực tiếp vì script tự tắt kiểm tra certificate tự ký
+khi dùng URL HTTPS:
+
+```powershell
+node loadtest.js https://localhost:8445 1000 20
+```
 
 Nếu máy chưa cài Node.js, chạy qua container có sẵn:
 
 ```bash
-docker run --rm -v "${PWD}:/app" -w /app node:20-alpine node loadtest.js http://host.docker.internal:8080 1000 20
+docker run --rm -v "${PWD}:/app" -w /app node:20-alpine node loadtest.js https://host.docker.internal:8445 1000 20
 ```
 
 Script sẽ in ra: tổng thời gian, requests/giây (RPS), độ trễ trung bình, và **tỷ lệ phần

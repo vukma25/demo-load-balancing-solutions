@@ -42,9 +42,11 @@ services:
     container_name: haproxy-lb
     ports:
       - "8081:80" # Traffic chính
+      - "8444:443"
       - "8404:8404" # Stats Dashboard trực quan
     volumes:
       - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - ./haproxy/certs:/usr/local/etc/haproxy/certs:ro
     depends_on:
       - backend1
       - backend2
@@ -57,8 +59,9 @@ services:
     container_name: waf
     ports:
       - "8082:8080"
+      - "8445:8443"
     environment:
-      - BACKEND=http://haproxy-lb:80
+      - BACKEND=https://haproxy-lb:443
       - PARANOIA=1 # Mức độ nghiêm ngặt của luật (1=lỏng nhất, 4=chặt nhất)
       - ANOMALY_INBOUND=5 # Ngưỡng điểm bất thường để chặn request (mặc định CRS: 5)
     depends_on:
