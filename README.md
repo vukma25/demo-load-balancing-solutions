@@ -36,6 +36,6 @@ Mô phỏng một website game trực tuyến có 2 cụm server đặt ở châ
   thực tế.
 - Kèm script mô phỏng traffic biến động theo giờ trong ngày.
 
-**Yêu cầu:** NodeJS, Docker Desktop, Minikube, kubectl, tài khoản MaxMind để tải GeoIP nếu trong trường hợp không có file GeoLite2-Country.mmdb trong thư mục [`geo`](./demo-global-lb/globel-router/geo)
+**Yêu cầu:** NodeJS, Docker Desktop, Minikube, kubectl, tài khoản MaxMind để tải GeoIP nếu trong trường hợp không có file GeoLite2-Country.mmdb trong thư mục [`geo`](./demo-global-lb/global-router/geo)
 
 Hướng dẫn cài đặt [`demo-global-lb/README.md`](./demo-global-lb/README.md)
