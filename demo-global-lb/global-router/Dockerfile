@@ -1,4 +1,4 @@
-# Build geoip2 module from source
+
 FROM nginx:1.26.3-alpine3.20 as builder
 RUN apk add --no-cache build-base pcre-dev zlib-dev libmaxminddb-dev git
 RUN git clone --depth 1 --branch master https://github.com/leev/ngx_http_geoip2_module.git /tmp/geoip2
@@ -11,5 +11,3 @@ RUN cd /tmp/nginx-1.26.3 && \
 FROM nginx:1.26.3-alpine3.20
 RUN apk add --no-cache libmaxminddb
 COPY --from=builder /tmp/nginx-1.26.3/objs/ngx_http_geoip2_module.so /etc/nginx/modules/
-# nginx.conf và file GeoLite2-Country.mmdb sẽ được mount vào lúc chạy container
-# (xem docker-compose-global.yml), không copy cứng vào image ở bước build.

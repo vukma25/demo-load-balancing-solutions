@@ -42,8 +42,7 @@ spec:
               cpu: "200m"
               memory: "128Mi"
 ---
-# Service đóng vai trò LOCAL LOAD BALANCER (PLB) trong cụm châu Á:
-# kube-proxy sẽ tự phân phối traffic đến các Pod hiện có (round robin/random)
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -58,7 +57,7 @@ spec:
       targetPort: 3000
       nodePort: 30080
 ---
-# HPA - tự động tăng/giảm số Pod dựa trên % CPU sử dụng
+
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:

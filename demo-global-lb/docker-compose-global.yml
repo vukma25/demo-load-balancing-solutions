@@ -11,6 +11,44 @@ services:
       default:
         aliases: []
 
+  waf:
+    image: owasp/modsecurity-crs:nginx
+    container_name: waf-global
+    ports:
+      - "9082:8080"
+    environment:
+      - BACKEND=http://global-router:80
+      - PARANOIA=1
+      - ANOMALY_INBOUND=5
+    depends_on:
+      - global-router
+    networks:
+      default:
+        aliases: []
+
+  # Chạy bằng: docker compose -f docker-compose-global.yml --profile security-test up --abort-on-container-exit
+  # Các payload chỉ là mẫu kiểm thử CRS, không phải khai thác thật.
+  waf-security-test:
+    image: curlimages/curl:8.10.1
+    profiles: [ "security-test" ]
+    depends_on:
+      - waf
+    entrypoint: [ "sh", "-ec" ]
+    command:
+      - |
+        test_case() {
+          name="$1"
+          url="$2"
+          status=$$(curl -sS -o /dev/null -w "%{http_code}" --max-time 10 "$${url}" || true)
+          printf '%-24s HTTP %s\n' "$${name}" "$${status}"
+        }
+
+        test_case "SQL injection" 'http://waf:8080/?search=%27%20OR%20%271%27%3D%271'
+        test_case "XSS" 'http://waf:8080/?q=%3Cscript%3Ealert%281%29%3C%2Fscript%3E'
+        test_case "Path traversal" 'http://waf:8080/../../etc/passwd'
+        test_case "Command injection" 'http://waf:8080/?cmd=%3Bcat%20%2Fetc%2Fpasswd'
+        test_case "JNDI probe" 'http://waf:8080/?q=%24%7Bjndi%3Aldap%3A%2F%2Fexample.invalid%2Fa%7D'
+
 networks:
   default:
     external: true

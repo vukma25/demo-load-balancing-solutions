@@ -20,6 +20,7 @@ services:
     command: [ "node", "server.js" ]
     environment:
       - SERVER_ID=2
+      - SLOW_MS=1000
     networks:
       - lb-net
 
@@ -32,6 +33,7 @@ services:
     command: [ "node", "server.js" ]
     environment:
       - SERVER_ID=3
+      - SLOW_MS=500
     networks:
       - lb-net
 
@@ -39,7 +41,7 @@ services:
     image: haproxy:latest
     container_name: haproxy-lb
     ports:
-      - "8081:80" # Traffic chính, tương đương cổng 8080 của Nginx
+      - "8081:80" # Traffic chính
       - "8404:8404" # Stats Dashboard trực quan
     volumes:
       - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
@@ -47,6 +49,20 @@ services:
       - backend1
       - backend2
       - backend3
+    networks:
+      - lb-net
+
+  waf:
+    image: owasp/modsecurity-crs:nginx
+    container_name: waf
+    ports:
+      - "8082:8080"
+    environment:
+      - BACKEND=http://haproxy-lb:80
+      - PARANOIA=1 # Mức độ nghiêm ngặt của luật (1=lỏng nhất, 4=chặt nhất)
+      - ANOMALY_INBOUND=5 # Ngưỡng điểm bất thường để chặn request (mặc định CRS: 5)
+    depends_on:
+      - haproxy-lb
     networks:
       - lb-net
 

@@ -12,7 +12,7 @@
 
 const ROUTER_URL = process.argv[2] || "http://localhost:9000";
 const SIM_HOURS = parseInt(process.argv[3] || "24", 10);
-const REAL_SECONDS_PER_HOUR = parseInt(process.argv[4] || "20", 10);
+const REAL_SECONDS_PER_HOUR = parseInt(process.argv[4] || "90", 10);
 const BASE_REQUESTS_PER_HOUR = parseInt(process.argv[5] || "100", 10);
 
 // ============================================================
@@ -29,13 +29,15 @@ const BASE_REQUESTS_PER_HOUR = parseInt(process.argv[5] || "100", 10);
 //   hoặc dùng công cụ mmdblookup, trước khi đưa số liệu vào báo cáo chính thức.
 // ============================================================
 const ASIA_IPS = [
-  "202.54.1.5", // Ấn Độ (IN) - đã xác nhận qua tài liệu MaxMind
+  "202.54.1.5", // Ấn Độ (IN)
+  "1.46.60.128", //ThaiLand (TH)
+  "2.27.27.96", //VietNam (VN)
 ];
 const EUROPE_IPS = [
-  "81.2.69.142", // Anh (GB) - IP mẫu chính thức MaxMind, độ tin cậy cao
-  "62.129.191.252", // Pháp (FR) - nguồn tham khảo, nên tự kiểm tra lại
-  "2.16.6.5", // Đức (DE) - nguồn tham khảo, nên tự kiểm tra lại
-  "62.13.255.230", // Tây Ban Nha (ES) - nguồn tham khảo, nên tự kiểm tra lại
+  "81.2.69.142", // Anh (GB)
+  "62.129.191.252", // Pháp (FR)
+  "62.13.255.230", // Tây Ban Nha (ES) 
+  "5.22.210.128", // Finland (FI)
 ];
 
 // Đường cong traffic theo giờ ĐỊA PHƯƠNG (0-23h) mô phỏng hành vi chơi game:
@@ -76,14 +78,39 @@ async function simulateHour(utcHour) {
 
   const asiaRequests = Math.round(BASE_REQUESTS_PER_HOUR * HOURLY_CURVE[asiaLocalHour]);
   const europeRequests = Math.round(BASE_REQUESTS_PER_HOUR * HOURLY_CURVE[europeLocalHour]);
+  const totalRequests = asiaRequests + europeRequests;
 
   console.log(`\n== Giờ mô phỏng ${utcHour}:00 (UTC) ==`);
   console.log(`  Châu Á  (giờ địa phương ${asiaLocalHour}h)  -> gửi ${asiaRequests} request`);
   console.log(`  Châu Âu (giờ địa phương ${europeLocalHour}h) -> gửi ${europeRequests} request`);
 
+  // ============================================================
+  // RẢI ĐỀU request ra suốt cả khoảng thời gian của giờ mô phỏng,
+  // thay vì gửi dồn 1 cục ở đầu rồi im lặng đến hết giờ. Nhờ đó CPU
+  // trên Pod duy trì ở mức tải ổn định liên tục, giúp Metrics Server
+  // (lấy mẫu mỗi ~15s) đo được số liệu phản ánh đúng tải thực tế của
+  // giờ đó, thay vì phụ thuộc may rủi vào đúng thời điểm lấy mẫu rơi
+  // trúng lúc "đỉnh xung" hay "khoảng lặng".
+  // ============================================================
+  const windowMs = REAL_SECONDS_PER_HOUR * 1000;
   const jobs = [];
-  for (let i = 0; i < asiaRequests; i++) jobs.push(sendOneRequest(randomFrom(ASIA_IPS)));
-  for (let i = 0; i < europeRequests; i++) jobs.push(sendOneRequest(randomFrom(EUROPE_IPS)));
+
+  function scheduleSpread(count, ipPool) {
+    if (count <= 0) return;
+    const stepMs = windowMs / count;
+    for (let i = 0; i < count; i++) {
+      const delay = Math.round(i * stepMs);
+      const job = new Promise((resolve) => {
+        setTimeout(() => {
+          sendOneRequest(randomFrom(ipPool)).then(resolve);
+        }, delay);
+      });
+      jobs.push(job);
+    }
+  }
+
+  scheduleSpread(asiaRequests, ASIA_IPS);
+  scheduleSpread(europeRequests, EUROPE_IPS);
 
   const results = await Promise.all(jobs);
   const okResults = results.filter((r) => r.ok);
