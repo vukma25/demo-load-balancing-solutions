@@ -5,9 +5,6 @@ const REGION = process.env.REGION || "unknown";
 const POD_NAME = process.env.POD_NAME || os.hostname();
 const PORT = 3000;
 
-// Tốn CPU thật trong một khoảng thời gian ngắn để mô phỏng tải xử lý của
-// một "trận đấu"/request game - nhờ đó HPA (dựa trên % CPU) mới có dữ liệu
-// thực tế để quyết định scale up/down.
 function busyWorkCPU(durationMs) {
   const end = Date.now() + durationMs;
   let x = 0;

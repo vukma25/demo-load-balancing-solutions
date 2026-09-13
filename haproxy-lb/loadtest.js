@@ -25,7 +25,6 @@ async function sendOneRequest() {
     const res = await fetch(url);
     const text = await res.text();
     const elapsed = Date.now() - start;
-    // Trích ra "Server ID: X" từ response text
     const match = text.match(/Server ID:\s*(\S+)/);
     const serverId = match ? match[1] : "unknown";
     return { ok: res.ok, elapsed, serverId };
@@ -59,7 +58,7 @@ async function main() {
     process.stdout.write(`\rĐã gửi: ${sent}/${totalRequests}`);
   }
 
-  const totalTime = (Date.now() - startTime) / 1000; // giây
+  const totalTime = (Date.now() - startTime) / 1000;
 
   // ---- Thống kê ----
   const okResults = results.filter((r) => r.ok);

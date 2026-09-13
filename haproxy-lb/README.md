@@ -95,12 +95,6 @@ khi dùng URL HTTPS:
 node loadtest.js https://localhost:8445 1000 20
 ```
 
-Nếu máy chưa cài Node.js, chạy qua container có sẵn:
-
-```bash
-docker run --rm -v "${PWD}:/app" -w /app node:20-alpine node loadtest.js https://host.docker.internal:8445 1000 20
-```
-
 Script sẽ in ra: tổng thời gian, requests/giây (RPS), độ trễ trung bình, và **tỷ lệ phần
 trăm traffic mỗi Server ID nhận được**.
 
@@ -109,6 +103,3 @@ trăm traffic mỗi Server ID nhận được**.
 ```bash
 docker compose down
 ```
-
-Lệnh này dừng và xoá toàn bộ container (không ảnh hưởng đến code/config). Chạy lại
-`docker compose up -d` bất cứ lúc nào để khởi động lại từ đầu.

@@ -24,7 +24,7 @@ spec:
       containers:
         - name: game-backend
           image: game-server:latest
-          imagePullPolicy: Never   # dùng image build sẵn trong Minikube, không kéo từ registry
+          imagePullPolicy: Never 
           ports:
             - containerPort: 3000
           env:
@@ -61,8 +61,8 @@ kind: Ingress
 metadata:
   name: game-backend-ingress
   namespace: asia-cluster
-  annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  # annotations:
+  #   nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   ingressClassName: nginx
   tls:
@@ -102,8 +102,6 @@ spec:
           type: Utilization
           averageUtilization: 50
   behavior:
-    # Rút ngắn thời gian chờ so với mặc định (mặc định scale down phải chờ 5 phút)
-    # để demo trong thời gian ngắn vẫn quan sát được hành vi scale down.
     scaleDown:
       stabilizationWindowSeconds: 30
       policies:

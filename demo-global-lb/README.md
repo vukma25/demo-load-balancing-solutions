@@ -50,14 +50,12 @@ Ingress terminate TLS bằng hai Secret dưới đây. Với demo local, có th�
 certificate tự ký có SAN cho cả hai hostname:
 
 ```
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout game-ingress.key -out game-ingress.crt \
-  -subj "/CN=game.local" \
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 `
+  -keyout game-ingress.key -out game-ingress.crt `
+  -subj "/CN=game.local" `
   -addext "subjectAltName=DNS:asia.game.local,DNS:europe.game.local"
-kubectl create secret tls asia-game-tls -n asia-cluster \
-  --cert=game-ingress.crt --key=game-ingress.key
-kubectl create secret tls europe-game-tls -n europe-cluster \
-  --cert=game-ingress.crt --key=game-ingress.key
+kubectl create secret tls asia-game-tls -n asia-cluster --cert=game-ingress.crt --key=game-ingress.key
+kubectl create secret tls europe-game-tls -n europe-cluster --cert=game-ingress.crt --key=game-ingress.key
 ```
 
 Kiểm tra:
@@ -83,12 +81,12 @@ Nếu lỗi "network minikube not found": chạy `docker network ls | grep minik
 
 ### Bước 4: Test định tuyến thủ công trước khi chạy mô phỏng
 ```
-curl -H "X-Forwarded-For: 202.54.1.5" http://localhost:9000 -v
+curl -k -H "X-Forwarded-For: 202.54.1.5" https://localhost:9444 -v
 ```
 Xem header trả về: `X-Detected-Country: IN` và `X-Routed-Region: asia` -> đúng nghĩa là định tuyến hoạt động.
 
 ```
-curl -H "X-Forwarded-For: 81.2.69.142" http://localhost:9000 -v
+curl --k H "X-Forwarded-For: 81.2.69.142" https://localhost:9444 -v
 ```
 Phải thấy `X-Detected-Country: GB` và `X-Routed-Region: europe`.
 
